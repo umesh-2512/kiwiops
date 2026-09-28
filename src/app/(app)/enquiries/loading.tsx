@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="page-stack" aria-busy="true"><div className="skeleton skeleton-heading" /><div className="customer-directory"><div className="skeleton skeleton-toolbar" /><div className="skeleton-list">{[1,2,3,4,5].map(i => <div className="skeleton skeleton-row" key={i} />)}</div></div></div>; }

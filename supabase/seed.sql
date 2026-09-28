@@ -1,0 +1,2 @@
+-- Milestone 2 intentionally contains no demo users or business records.
+-- Authentication and approved fictional seed data will be added in a later milestone.

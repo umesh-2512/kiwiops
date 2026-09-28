@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="page-stack"><div className="skeleton skeleton-heading" /><div className="customer-directory"><div className="skeleton skeleton-toolbar" /><div className="skeleton-list">{Array.from({ length: 5 }, (_, i) => <div className="skeleton skeleton-row" key={i} />)}</div></div></div>; }
