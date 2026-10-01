@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="tech-page" aria-live="polite"><p className="eyebrow">Field workspace</p><h1>Loading jobs...</h1><div className="skeleton skeleton-toolbar"/></div>}

@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{navigationItems,technicianNavigationItems}from"./navigation";
+describe("role-aware navigation",()=>{it("limits technicians to assigned work",()=>{expect(technicianNavigationItems).toEqual([{label:"My Jobs",href:"/my-jobs",icon:"jobs"}]);expect(technicianNavigationItems.map(x=>x.href)).not.toContain("/quotes")});it("preserves office navigation",()=>expect(navigationItems.map(x=>x.href)).toContain("/jobs"))});

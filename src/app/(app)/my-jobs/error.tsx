@@ -1,0 +1,1 @@
+"use client";export default function Error({reset}:{reset:()=>void}){return <div className="tech-empty"><h1>My Jobs could not be loaded</h1><p>Check your connection and try again.</p><button className="button button-primary" onClick={reset}>Try again</button></div>}

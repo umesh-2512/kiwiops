@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useActionState, useId, useRef } from "react";
+import Link from "next/link";
 import { issueQuoteAction, quoteOutcomeAction } from "@/app/actions/quotes";
 import { initialQuoteState } from "@/lib/quotes/validation";
 
@@ -48,5 +49,6 @@ function StatusForm({ action, confirmText, detail, label, pendingLabel, tone = "
 export function QuoteStatusActions({ id, number, status }: { id: string; number: string; status: string }) {
   if (status === "draft") return <StatusForm action={issueQuoteAction.bind(null, id)} confirmText={`Issue quote ${number}?`} detail="Once issued, the quote's customer, enquiry, dates, line items, prices, notes, terms, and totals will be locked." label="Issue quote" pendingLabel="Issuing quote..." />;
   if (status === "sent") return <div className="detail-actions"><StatusForm action={quoteOutcomeAction.bind(null, id, "rejected")} confirmText={`Mark ${number} declined?`} detail="This records the customer's decision and cannot be reversed in the current workflow." label="Mark declined" pendingLabel="Updating status..." tone="secondary" /><StatusForm action={quoteOutcomeAction.bind(null, id, "accepted")} confirmText={`Mark ${number} accepted?`} detail="This records the customer's decision and cannot be reversed in the current workflow." label="Mark accepted" pendingLabel="Updating status..." /></div>;
+  if (status === "accepted") return <Link className="button button-primary" href={`/jobs/new?quoteId=${id}`}>Create job</Link>;
   return null;
 }

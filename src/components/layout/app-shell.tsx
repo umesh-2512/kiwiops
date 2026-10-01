@@ -21,7 +21,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOutAction } from "@/app/actions/auth";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { navigationItems } from "@/lib/navigation";
+import { navigationItems, technicianNavigationItems } from "@/lib/navigation";
 
 const iconMap = {
   dashboard: Gauge,
@@ -51,13 +51,15 @@ const roleLabels = {
 export function AppShell({ children, viewer }: { children: React.ReactNode; viewer: AppShellViewer }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const items = viewer.role === "technician" ? technicianNavigationItems : navigationItems;
+  const homeHref = viewer.role === "technician" ? "/my-jobs" : "/";
 
   return (
     <div className="app-frame">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand-row">
-          <Link className="brand" href="/" aria-label="KiwiOps dashboard" onClick={() => setMenuOpen(false)}>
+          <Link className="brand" href={homeHref} aria-label="KiwiOps home" onClick={() => setMenuOpen(false)}>
             <span className="brand-mark" aria-hidden="true">
               <Wrench size={17} strokeWidth={2.2} />
             </span>
@@ -83,7 +85,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
 
         <nav className="primary-nav" aria-label="Primary navigation">
           <p className="nav-label">Workspace</p>
-          {navigationItems.map((item) => {
+          {items.map((item) => {
             const Icon = iconMap[item.icon];
             const active = pathname === item.href;
             return (

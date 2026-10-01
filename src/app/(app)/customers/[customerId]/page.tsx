@@ -7,6 +7,8 @@ import { customerDisplayName } from "@/lib/customers/types";
 import { getRecentCustomerQuotes } from "@/lib/quotes/data";
 import { formatMoney } from "@/lib/quotes/money";
 import { quoteStatusLabels, type QuoteStatus } from "@/lib/quotes/types";
+import { getRecentCustomerJobs } from "@/lib/jobs/data";
+import { jobStatusLabels, type JobStatus } from "@/lib/jobs/types";
 
 type CustomerPageProps = {
   params: Promise<{ customerId: string }>;
@@ -30,10 +32,11 @@ export async function generateMetadata({ params }: CustomerPageProps): Promise<M
 export default async function CustomerPage({ params, searchParams }: CustomerPageProps) {
   const { customerId } = await params;
   const { organization } = await requireOfficeContext();
-  const [customer, activity, quotes] = await Promise.all([
+  const [customer, activity, quotes, jobs] = await Promise.all([
     getCustomer(customerId, organization.id),
     getCustomerActivity(customerId, organization.id),
     getRecentCustomerQuotes(customerId, organization.id),
+    getRecentCustomerJobs(customerId, organization.id),
   ]);
   const name = customerDisplayName(customer);
   const rawNotice = (await searchParams).notice;
@@ -65,8 +68,8 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
 
           <section className="detail-card" aria-labelledby="notes-title"><div className="detail-card-heading"><p className="eyebrow">Internal notes</p><h2 id="notes-title">Customer context</h2></div><p className={customer.notes ? "customer-notes" : "muted-value"}>{customer.notes || "No notes have been added."}</p></section>
 
-          <section className="detail-card" aria-labelledby="future-work-title"><div className="detail-card-heading"><p className="eyebrow">Related work</p><h2 id="future-work-title">Business records</h2></div>{quotes.length ? <div className="related-record-list">{quotes.map(quote => <Link href={`/quotes/${quote.id}`} key={quote.id}><span><strong>{quote.quote_number}</strong><small>{quoteStatusLabels[quote.status as QuoteStatus]}</small></span><b>{formatMoney(quote.total_cents, quote.currency)}</b></Link>)}</div> : <div className="future-records">
-            <div><CalendarDays aria-hidden="true" size={18} /><span><strong>Jobs</strong><small>Available in a future milestone</small></span></div>
+          <section className="detail-card" aria-labelledby="future-work-title"><div className="detail-card-heading"><p className="eyebrow">Related work</p><h2 id="future-work-title">Business records</h2></div>{jobs.length || quotes.length ? <div className="related-record-list">{jobs.map(job => <Link href={`/jobs/${job.id}`} key={job.id}><span><strong>{job.job_number}</strong><small>{job.job_type} · {jobStatusLabels[job.status as JobStatus]}</small></span></Link>)}{quotes.map(quote => <Link href={`/quotes/${quote.id}`} key={quote.id}><span><strong>{quote.quote_number}</strong><small>{quoteStatusLabels[quote.status as QuoteStatus]}</small></span><b>{formatMoney(quote.total_cents, quote.currency)}</b></Link>)}</div> : <div className="future-records">
+            <div><CalendarDays aria-hidden="true" size={18} /><span><strong>Jobs</strong><small>No jobs yet</small></span></div>
             <div><FileText aria-hidden="true" size={18} /><span><strong>Quotes</strong><small>No quotes yet</small></span></div>
             <div><ReceiptText aria-hidden="true" size={18} /><span><strong>Invoices</strong><small>Available in a future milestone</small></span></div>
           </div>}</section>

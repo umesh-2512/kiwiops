@@ -1,0 +1,1 @@
+import Link from"next/link";export default function NotFound(){return <div className="tech-empty"><h1>Job unavailable</h1><p>This job is not assigned to you or is no longer available.</p><Link className="button button-primary" href="/my-jobs">Back to My Jobs</Link></div>}

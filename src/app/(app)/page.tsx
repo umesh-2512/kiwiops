@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getViewerContext } from "@/lib/auth/context";
 
 const modules = [
@@ -18,6 +19,7 @@ const modules = [
 
 export default async function DashboardPage() {
   const viewer = await getViewerContext();
+  if (viewer?.organization?.role === "technician") redirect("/my-jobs");
 
   return (
     <div className="page-stack">

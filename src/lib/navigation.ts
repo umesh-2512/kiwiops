@@ -10,6 +10,10 @@ export const navigationItems = [
   { label: "Settings", href: "/settings", icon: "settings" },
 ] as const;
 
+export const technicianNavigationItems = [
+  { label: "My Jobs", href: "/my-jobs", icon: "jobs" },
+] as const;
+
 export const modulePages: Record<string, {
   title: string;
   eyebrow: string;

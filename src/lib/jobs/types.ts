@@ -1,0 +1,7 @@
+export const jobStatuses = ["unscheduled", "scheduled", "in_progress", "completed", "cancelled"] as const;
+export type JobStatus = typeof jobStatuses[number];
+export const jobStatusLabels: Record<JobStatus,string> = { unscheduled:"Unscheduled", scheduled:"Scheduled", in_progress:"In progress", completed:"Completed", cancelled:"Cancelled" };
+export type JobPriority = "low"|"medium"|"high"|"urgent";
+export type Job = { id:string; organization_id:string; customer_id:string; quote_id:string|null; job_number:string; job_type:string; description:string; priority:JobPriority; status:JobStatus; scheduled_start_at:string|null; estimated_duration_minutes:number|null; address_line_1:string; address_line_2:string|null; suburb:string|null; city:string; postcode:string|null; completion_notes:string|null; started_at:string|null; completed_at:string|null; cancelled_at:string|null; created_at:string; updated_at:string; customers:{id:string;first_name:string;last_name:string;email:string|null;phone:string|null}; quotes:{id:string;quote_number:string;status:string}|null; job_assignments?:{id:string;member_id:string;assigned_at:string;unassigned_at:string|null;organization_members:{id:string;role:string;profiles:{first_name:string;last_name:string}}}[] };
+export type JobActivity={id:string;summary:string;created_at:string};
+export const jobCustomerName=(j:Job)=>`${j.customers.first_name} ${j.customers.last_name}`.trim();

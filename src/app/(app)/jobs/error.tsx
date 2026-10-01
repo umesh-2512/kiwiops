@@ -1,0 +1,1 @@
+"use client";export default function Error({reset}:{reset:()=>void}){return <div className="route-error"><p className="eyebrow">Jobs</p><h1>Jobs could not be loaded</h1><p>Try again. Your data has not been changed.</p><button className="button button-primary" onClick={reset}>Try again</button></div>}
