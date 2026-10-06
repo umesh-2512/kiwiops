@@ -13,7 +13,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
     <form action={action} className="auth-form" noValidate>
       <input name="next" type="hidden" value={nextPath} />
       <div className="field-group">
-        <label htmlFor="login-email">Email</label>
+        <label htmlFor="login-email">Email address</label>
         <input
           aria-describedby={state.fieldErrors?.email ? "login-email-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.email)}

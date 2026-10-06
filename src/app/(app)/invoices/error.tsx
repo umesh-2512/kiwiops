@@ -1,0 +1,1 @@
+"use client";export default function Error({reset}:{reset:()=>void}){return <div className="customer-empty"><h1>Invoices could not be loaded</h1><p>Try again. If the problem continues, check the development console.</p><button className="button button-primary" onClick={reset}>Try again</button></div>}

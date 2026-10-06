@@ -24,7 +24,7 @@ export default async function LoginPage({
       : null;
 
   return (
-    <AuthShell eyebrow="Welcome back" title="Sign in to your workspace">
+    <AuthShell description="Sign in to your workspace." title="Welcome back to KiwiOps">
       {statusMessage ? <p className="form-message form-message-error" role="alert">{statusMessage}</p> : null}
       <LoginForm nextPath={safeAppRedirect(params.next)} />
     </AuthShell>

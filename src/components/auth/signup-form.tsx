@@ -49,7 +49,7 @@ export function SignupForm() {
         </div>
       </div>
       <div className="field-group">
-        <label htmlFor="signup-email">Email</label>
+        <label htmlFor="signup-email">Email address</label>
         <input
           aria-describedby={state.fieldErrors?.email ? "signup-email-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.email)}

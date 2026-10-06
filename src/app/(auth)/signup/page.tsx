@@ -12,7 +12,7 @@ export default async function SignupPage() {
   if (viewer) redirect("/onboarding");
 
   return (
-    <AuthShell eyebrow="Start with KiwiOps" title="Create your account">
+    <AuthShell description="Set up your workspace and start managing your operations in one place." title="Create your KiwiOps account">
       <SignupForm />
     </AuthShell>
   );

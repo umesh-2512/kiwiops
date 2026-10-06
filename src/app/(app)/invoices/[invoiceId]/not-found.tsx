@@ -1,0 +1,1 @@
+import Link from"next/link";export default function NotFound(){return <div className="customer-empty"><h1>Invoice unavailable</h1><p>This invoice does not exist or is outside your organization.</p><Link className="button button-primary" href="/invoices">Back to invoices</Link></div>}
