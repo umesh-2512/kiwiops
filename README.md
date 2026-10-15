@@ -43,3 +43,15 @@ Dashboard definitions:
 `20261006001100_operational_dashboard.sql` adds one narrow aggregate RPC. It derives the organization-local date from `business_settings.timezone`, requires an authenticated owner/admin membership, and returns counts and financial totals only. Job lists and recent activity continue to use existing forced-RLS table reads. Recent activity uses `organization_members.display_name` through the explicit activity-log actor relationship.
 
 The dashboard limits today to 12 jobs, upcoming work to 5 jobs, and recent activity to 8 events. It is an operational overview, not an accounting ledger or historical reporting system. The migration must be reviewed and explicitly approved before remote deployment.
+
+## Milestone 11: Smart Insights
+
+Smart Insights is a deterministic operational assistant for owners and admins. It groups seven explicit rules: overdue sent invoices, urgent open enquiries, high-priority enquiries open for at least one organization-local calendar day, unscheduled jobs, scheduled jobs without an active technician assignment, completed jobs with no invoice record, and sent quotes awaiting a decision for at least seven organization-local calendar days.
+
+Rules have a fixed priority from financial urgency through enquiry, job, invoicing, and quote follow-up. Severity is limited to `critical`, `attention`, and `opportunity`. Counts are grouped by rule rather than returning customer or document rows. Invoice balances use sent invoices minus non-voided payments, matching the invoice and dashboard definitions. Date thresholds use `business_settings.timezone`, including Pacific/Auckland daylight-saving boundaries.
+
+`20261007001200_smart_insights.sql` adds `get_smart_insights(uuid)`, a narrow aggregate RPC restricted to active owner/admin membership. The supplied organization scopes the query but does not authorize it; caller identity comes from `auth.uid()`. Technicians, inactive members, anonymous callers, and cross-organization callers are rejected. `/insights` and the dashboard preview use one shared presentation mapper, and an RPC failure is never shown as an all-clear result.
+
+Service reminders are deferred because KiwiOps does not yet provide a supported reminder management workflow. This version deliberately uses auditable business rules instead of an LLM, prediction service, health score, or generated recommendation. At larger scale, quote ageing should be measured before considering an `(organization_id, status, sent_at)` index.
+
+Migration `01200` was reviewed, approved, and applied to the linked project.

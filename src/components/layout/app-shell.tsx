@@ -7,6 +7,7 @@ import {
   Gauge,
   HandCoins,
   Inbox,
+  Lightbulb,
   Menu,
   ReceiptText,
   Search,
@@ -25,6 +26,7 @@ import { navigationItems, technicianNavigationItems } from "@/lib/navigation";
 
 const iconMap = {
   dashboard: Gauge,
+  insights: Lightbulb,
   customers: Users,
   enquiries: Inbox,
   quotes: FileText,
