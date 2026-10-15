@@ -12,12 +12,16 @@ import {
   UserPlus,
 } from "lucide-react";
 import Link from "next/link";
+import { InsightCard } from "@/components/insights/insight-card";
 import { formatMoney } from "@/lib/quotes/money";
 import { jobStatusLabels } from "@/lib/jobs/types";
-import { activityHref, assignedTechnicians, attentionItems } from "@/lib/dashboard/presentation";
+import { activityHref, assignedTechnicians } from "@/lib/dashboard/presentation";
 import { getOperationalDashboard, requireDashboardOfficeContext } from "@/lib/dashboard/data";
 import { organizationDateLabel, organizationGreeting } from "@/lib/dashboard/timezone";
 import type { DashboardData, DashboardJob } from "@/lib/dashboard/types";
+import { getSmartInsightFacts } from "@/lib/insights/data";
+import { buildSmartInsights } from "@/lib/insights/presentation";
+import type { SmartInsight } from "@/lib/insights/types";
 
 const workflow = ["Enquiry", "Quote", "Job", "Invoice", "Paid"];
 
@@ -49,8 +53,11 @@ function JobRow({ job, timeZone, upcoming = false }: { job: DashboardJob; timeZo
 export default async function DashboardPage() {
   const { organization, viewer } = await requireDashboardOfficeContext();
   let data: DashboardData;
+  let insights: SmartInsight[];
   try {
-    data = await getOperationalDashboard(organization.id);
+    const [dashboard, facts] = await Promise.all([getOperationalDashboard(organization.id), getSmartInsightFacts(organization.id)]);
+    data = dashboard;
+    insights = buildSmartInsights(facts);
   } catch {
     return (
       <section className="route-error" role="alert">
@@ -63,14 +70,6 @@ export default async function DashboardPage() {
   }
 
   const { summary } = data;
-  const attention = attentionItems(summary);
-  const attentionCopy: Record<string, { title: string; detail: string }> = {
-    overdue: { title: `${summary.overdue_invoice_count} overdue ${summary.overdue_invoice_count === 1 ? "invoice" : "invoices"}`, detail: `${formatMoney(summary.overdue_cents, summary.currency)} remains collectible` },
-    enquiries: { title: `${summary.urgent_open_enquiries} high-priority ${summary.urgent_open_enquiries === 1 ? "enquiry" : "enquiries"}`, detail: "Open enquiries marked high or urgent" },
-    unscheduled: { title: `${summary.unscheduled_jobs} unscheduled ${summary.unscheduled_jobs === 1 ? "job" : "jobs"}`, detail: "Work waiting for a scheduled start" },
-    unassigned: { title: `${summary.unassigned_scheduled_jobs} scheduled ${summary.unassigned_scheduled_jobs === 1 ? "job has" : "jobs have"} no technician`, detail: "Assign an active technician before work begins" },
-    quotes: { title: `${summary.quotes_awaiting_decision} ${summary.quotes_awaiting_decision === 1 ? "quote is" : "quotes are"} awaiting a decision`, detail: "Issued quotes without an accepted or declined outcome" },
-  };
 
   return (
     <div className="page-stack dashboard-page">
@@ -98,8 +97,9 @@ export default async function DashboardPage() {
 
       <div className="dashboard-primary-grid">
         <section className="dashboard-panel dashboard-attention" aria-labelledby="attention-title">
-          <div className="dashboard-panel-heading"><div><p className="eyebrow">Priority</p><h2 id="attention-title">Attention required</h2></div><AlertCircle aria-hidden="true" size={20} /></div>
-          {attention.length ? <div className="attention-list">{attention.map((item) => <Link href={item.href} key={item.key}><span className="attention-indicator" /><span><strong>{attentionCopy[item.key].title}</strong><small>{attentionCopy[item.key].detail}</small></span><ArrowRight aria-hidden="true" size={16} /></Link>)}</div> : <div className="dashboard-empty"><strong>Nothing needs immediate attention.</strong><span>Your open work has no current exceptions.</span></div>}
+          <div className="dashboard-panel-heading"><div><p className="eyebrow">Priority</p><h2 id="attention-title">Smart Insights</h2></div><AlertCircle aria-hidden="true" size={20} /></div>
+          {insights.length ? <div className="dashboard-insight-list">{insights.slice(0, 3).map((insight) => <InsightCard compact insight={insight} key={insight.key} />)}</div> : <div className="dashboard-empty"><strong>Nothing needs immediate attention.</strong><span>Your open work has no current exceptions.</span></div>}
+          <Link className="dashboard-panel-link" href="/insights">View all insights <ArrowRight aria-hidden="true" size={14} /></Link>
         </section>
 
         <section className="dashboard-panel dashboard-today" aria-labelledby="today-title">
