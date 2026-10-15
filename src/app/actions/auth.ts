@@ -8,6 +8,11 @@ import {
 } from "@/lib/auth/context";
 import { safeAppRedirect } from "@/lib/auth/redirects";
 import {
+  authErrorResponse,
+  reportAuthFailure,
+  runAuthRequest,
+} from "@/lib/auth/service-errors";
+import {
   type AuthActionState,
   hasFieldErrors,
   validateBusinessName,
@@ -36,13 +41,6 @@ async function requestOrigin() {
   return `${protocol}://${host}`;
 }
 
-function authServiceMessage(code?: string) {
-  if (code === "invalid_credentials") return "Email or password is incorrect.";
-  if (code === "weak_password") return "Choose a stronger password and try again.";
-  if (code === "over_email_send_rate_limit") return "Too many confirmation emails were requested. Try again later.";
-  return "Authentication is temporarily unavailable. Please try again.";
-}
-
 export async function signInAction(
   _previousState: AuthActionState,
   formData: FormData,
@@ -50,13 +48,16 @@ export async function signInAction(
   const { data, fieldErrors } = validateLogin(formData);
   if (hasFieldErrors(fieldErrors)) return { fieldErrors, status: "error" };
 
-  const supabase = await createClient();
-  const result = await supabase.auth.signInWithPassword(data);
+  const request = await runAuthRequest("sign_in", async () => {
+    const supabase = await createClient();
+    const result = await supabase.auth.signInWithPassword(data);
+    return { result, supabase };
+  });
+  if (request.status === "error") return request;
+
+  const { result, supabase } = request.value;
   if (result.error || !result.data.user) {
-    return {
-      message: authServiceMessage(result.error?.code),
-      status: "error",
-    };
+    return authErrorResponse("sign_in", result.error);
   }
 
   const claims: Claims = {
@@ -70,6 +71,7 @@ export async function signInAction(
     await ensureProfile(supabase, claims);
     organization = await findFirstOrganization(supabase, result.data.user.id);
   } catch {
+    reportAuthFailure("sign_in", "profile_load_failed");
     return {
       message: "Your account is signed in, but KiwiOps could not load your profile. Please try again.",
       status: "error",
@@ -87,30 +89,42 @@ export async function signUpAction(
   const { data, fieldErrors } = validateSignup(formData);
   if (hasFieldErrors(fieldErrors)) return { fieldErrors, status: "error" };
 
-  const origin = await requestOrigin();
-  const supabase = await createClient();
-  const result = await supabase.auth.signUp({
-    email: data.email,
-    password: data.password,
-    options: {
-      data: { first_name: data.firstName, last_name: data.lastName },
-      emailRedirectTo: new URL("/auth/confirm", origin).toString(),
-    },
+  const request = await runAuthRequest("sign_up", async () => {
+    const origin = await requestOrigin();
+    const supabase = await createClient();
+    const result = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: { first_name: data.firstName, last_name: data.lastName },
+        emailRedirectTo: new URL("/auth/confirm", origin).toString(),
+      },
+    });
+    return { result, supabase };
   });
+  if (request.status === "error") return request;
+
+  const { result, supabase } = request.value;
 
   if (result.error) {
-    return {
-      message: authServiceMessage(result.error.code),
-      status: "error",
-    };
+    return authErrorResponse("sign_up", result.error);
   }
 
   if (result.data.session && result.data.user) {
-    await ensureProfile(supabase, {
-      email: result.data.user.email,
-      sub: result.data.user.id,
-      user_metadata: result.data.user.user_metadata,
-    });
+    try {
+      await ensureProfile(supabase, {
+        email: result.data.user.email,
+        sub: result.data.user.id,
+        user_metadata: result.data.user.user_metadata,
+      });
+    } catch {
+      reportAuthFailure("sign_up", "profile_setup_failed");
+      return {
+        message:
+          "Your account was created, but KiwiOps could not load your profile. Please sign in again.",
+        status: "error",
+      };
+    }
     redirect("/onboarding");
   }
 
