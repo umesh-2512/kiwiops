@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { quoteDocumentParties } from "./presentation";
+import { isQuoteExpired, quoteDocumentParties } from "./presentation";
 import type { Quote, QuoteBusinessDetails } from "./types";
 
 function quote(status: Quote["status"]): Quote {
@@ -73,6 +73,11 @@ const liveBusiness: QuoteBusinessDetails = {
 };
 
 describe("quote document parties", () => {
+  it("uses the organization calendar date for expiry", () => {
+    expect(isQuoteExpired("sent", "2026-01-02", "2026-01-01")).toBe(false);
+    expect(isQuoteExpired("sent", "2026-01-01", "2026-01-02")).toBe(true);
+    expect(isQuoteExpired("accepted", "2026-01-01", "2026-01-02")).toBe(false);
+  });
   it("uses current customer and business details for drafts", () => {
     const parties = quoteDocumentParties(quote("draft"), liveBusiness);
     expect(parties.customer.name).toBe("Current Customer");
