@@ -20,6 +20,10 @@ export function quoteDisplayCustomerName(quote: Quote) {
     : quote.customer_name_snapshot || "Customer details unavailable";
 }
 
+export function isQuoteExpired(status: Quote["status"], expiryDate: string, organizationToday: string) {
+  return status === "sent" && expiryDate < organizationToday;
+}
+
 export function quoteDocumentParties(
   quote: Quote,
   liveBusiness: QuoteBusinessDetails | null,

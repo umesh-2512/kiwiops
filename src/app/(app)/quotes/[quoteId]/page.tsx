@@ -5,19 +5,18 @@ import { QuoteStatusActions } from "@/components/quotes/quote-status-actions";
 import {
   getQuote,
   getQuoteActivity,
+  getQuoteDefaults,
   getQuoteDocumentBusiness,
   requireQuoteOfficeContext,
 } from "@/lib/quotes/data";
 import { formatMoney } from "@/lib/quotes/money";
-import { quoteDocumentParties } from "@/lib/quotes/presentation";
+import { isQuoteExpired, quoteDocumentParties } from "@/lib/quotes/presentation";
 import { quoteStatusLabels } from "@/lib/quotes/types";
+import { formatDateOnly, formatDateTime } from "@/lib/timezone";
 
 export const metadata: Metadata = { title: "Quote details" };
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-NZ", { dateStyle: "medium" }).format(
-    new Date(value.length === 10 ? `${value}T00:00:00` : value),
-  );
+const formatDate = formatDateOnly;
 
 const joined = (values: Array<string | null | undefined>) =>
   values.filter(Boolean).join(", ");
@@ -31,9 +30,10 @@ export default async function QuotePage({
 }) {
   const { quoteId } = await params;
   const { organization } = await requireQuoteOfficeContext();
-  const [quote, activity] = await Promise.all([
+  const [quote, activity, defaults] = await Promise.all([
     getQuote(quoteId, organization.id),
     getQuoteActivity(quoteId, organization.id),
+    getQuoteDefaults(organization.id),
   ]);
   const liveBusiness =
     quote.status === "draft"
@@ -49,9 +49,7 @@ export default async function QuotePage({
     accepted: "Quote marked accepted.",
     rejected: "Quote marked declined.",
   };
-  const expired =
-    quote.status === "sent" &&
-    quote.expiry_date < new Date().toISOString().slice(0, 10);
+  const expired = isQuoteExpired(quote.status, quote.expiry_date, defaults.organization_today);
   const businessAddress = joined(parties.business.address);
   const businessContact = joined([parties.business.email, parties.business.phone]);
   const customerAddress = joined(parties.customer.address);
@@ -159,7 +157,7 @@ export default async function QuotePage({
             {activity.length ? (
               <ol className="activity-list">
                 {activity.map((entry) => (
-                  <li key={entry.id}><i /><div><strong>{entry.summary}</strong><time dateTime={entry.created_at}>{new Intl.DateTimeFormat("en-NZ", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.created_at))}</time></div></li>
+                  <li key={entry.id}><i /><div><strong>{entry.summary}</strong><time dateTime={entry.created_at}>{formatDateTime(entry.created_at, defaults.timezone)}</time></div></li>
                 ))}
               </ol>
             ) : <p className="muted-value">No activity recorded.</p>}
