@@ -92,19 +92,21 @@ select is(
   'Organization A cannot read Organization B customers'
 );
 
--- Composite ownership prevents an Organization A quote from using Organization B's customer.
+-- The controlled quote operation rejects an Organization B customer for Organization A.
 select throws_ok(
   $$
-    insert into public.quotes (
-      organization_id, customer_id, expiry_date
-    ) values (
+    select public.create_quote(
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       'cb222222-2222-2222-2222-222222222222',
-      current_date + 30
+      null,
+      current_date + 30,
+      null,
+      null,
+      '[]'::jsonb
     )
   $$,
-  '23503',
-  null,
+  'P0002',
+  'Active customer not found',
   'Cross-organization quote customer reference is rejected'
 );
 
@@ -171,18 +173,27 @@ select throws_ok(
   'Owner cannot change their own role'
 );
 
--- A cross-organization assignment is rejected independently of RLS.
+-- The controlled job operation rejects a member from another organization.
 select throws_ok(
   $$
-    insert into public.job_assignments (organization_id, job_id, member_id)
-    values (
-      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    select public.update_job(
       'f1111111-1111-1111-1111-111111111111',
-      'b4444444-4444-4444-4444-444444444444'
+      (select updated_at from public.jobs where id = 'f1111111-1111-1111-1111-111111111111'),
+      'Pool service',
+      'Routine pool service',
+      'medium',
+      null,
+      60,
+      '1 Test Street',
+      null,
+      null,
+      'Auckland',
+      null,
+      array['b4444444-4444-4444-4444-444444444444']::uuid[]
     )
   $$,
   '23514',
-  'Assignment target must be an active organization member',
+  'Every assignee must be an active technician in this organization',
   'Cross-organization assignment is rejected'
 );
 
