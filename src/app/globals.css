@@ -551,10 +551,12 @@ h2 { font-size: 19px; font-weight: 650; letter-spacing: -0.025em; }
   .auth-intro { display: none; }
   .auth-panel { min-height: 100vh; padding: 30px clamp(24px, 8vw, 64px) 24px; }
   .auth-card { padding-block: 64px; }
-  .sidebar { box-shadow: 18px 0 50px rgba(6, 24, 18, 0.24); transform: translateX(-105%); transition: transform 200ms ease; }
+  .sidebar { max-width: calc(100vw - 48px); box-shadow: 18px 0 50px rgba(6, 24, 18, 0.24); transform: translateX(-105%); transition: transform 200ms ease; }
   .sidebar-open { transform: translateX(0); }
   .sidebar-close, .mobile-menu, .mobile-brand { display: inline-flex; }
+  .sidebar-close, .mobile-menu { width: 44px; height: 44px; }
   .sidebar-close { color: #bccac3; }
+  .nav-item { min-height: 44px; }
   .sidebar-scrim { position: fixed; inset: 0; z-index: 30; display: block; border: 0; background: rgba(7, 22, 17, 0.45); }
   .content-frame { margin-left: 0; }
   .topbar { height: 62px; gap: 10px; padding: 0 20px; }
