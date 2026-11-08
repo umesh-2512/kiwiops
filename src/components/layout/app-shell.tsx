@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { signOutAction } from "@/app/actions/auth";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { navigationItems, technicianNavigationItems } from "@/lib/navigation";
@@ -53,15 +53,108 @@ const roleLabels = {
 export function AppShell({ children, viewer }: { children: React.ReactNode; viewer: AppShellViewer }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileLayout, setMobileLayout] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const restoreMenuFocusRef = useRef(false);
+  const routeNavigationRef = useRef(false);
   const items = viewer.role === "technician" ? technicianNavigationItems : navigationItems;
   const homeHref = viewer.role === "technician" ? "/my-jobs" : "/";
+
+  const closeNavigation = useCallback((restoreFocus = true) => {
+    restoreMenuFocusRef.current = restoreFocus;
+    setMenuOpen(false);
+  }, []);
+
+  const navigateFromDrawer = useCallback(() => {
+    if (!mobileLayout) return;
+    routeNavigationRef.current = true;
+    closeNavigation(false);
+  }, [closeNavigation, mobileLayout]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 840px)");
+    const updateLayout = () => {
+      setMobileLayout(media.matches);
+      if (!media.matches) setMenuOpen(false);
+    };
+    updateLayout();
+    media.addEventListener("change", updateLayout);
+    return () => media.removeEventListener("change", updateLayout);
+  }, []);
+
+  useEffect(() => {
+    if (routeNavigationRef.current) {
+      routeNavigationRef.current = false;
+      requestAnimationFrame(() => mainRef.current?.focus());
+    }
+    const frame = requestAnimationFrame(() => setMenuOpen(false));
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileLayout) return;
+    if (!menuOpen) {
+      if (restoreMenuFocusRef.current) {
+        restoreMenuFocusRef.current = false;
+        requestAnimationFrame(() => menuButtonRef.current?.focus());
+      }
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => closeButtonRef.current?.focus());
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeNavigation();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(sidebarRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? []).filter((element) => !element.hasAttribute("inert"));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !sidebarRef.current?.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !sidebarRef.current?.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeNavigation, menuOpen, mobileLayout]);
 
   return (
     <div className="app-frame">
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
+      <aside
+        aria-hidden={mobileLayout && !menuOpen ? true : undefined}
+        aria-label={mobileLayout ? "Primary navigation menu" : undefined}
+        aria-modal={mobileLayout && menuOpen ? true : undefined}
+        className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}
+        id="mobile-navigation"
+        inert={mobileLayout && !menuOpen ? true : undefined}
+        ref={sidebarRef}
+        role={mobileLayout ? "dialog" : undefined}
+      >
         <div className="brand-row">
-          <Link className="brand" href={homeHref} aria-label="KiwiOps home" onClick={() => setMenuOpen(false)}>
+          <Link className="brand" href={homeHref} aria-label="KiwiOps home" onClick={navigateFromDrawer}>
             <span className="brand-mark" aria-hidden="true">
               <Wrench size={17} strokeWidth={2.2} />
             </span>
@@ -70,7 +163,8 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
           <button
             aria-label="Close navigation"
             className="icon-button sidebar-close"
-            onClick={() => setMenuOpen(false)}
+            onClick={() => closeNavigation()}
+            ref={closeButtonRef}
             type="button"
           >
             <X size={19} />
@@ -89,14 +183,14 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
           <p className="nav-label">Workspace</p>
           {items.map((item) => {
             const Icon = iconMap[item.icon];
-            const active = pathname === item.href;
+            const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
             return (
               <Link
                 aria-current={active ? "page" : undefined}
                 className={`nav-item ${active ? "nav-item-active" : ""}`}
                 href={item.href}
                 key={item.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={navigateFromDrawer}
               >
                 <Icon aria-hidden="true" size={18} strokeWidth={1.8} />
                 <span>{item.label}</span>
@@ -121,8 +215,10 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
       {menuOpen ? (
         <button
           aria-label="Close navigation"
+          aria-hidden="true"
           className="sidebar-scrim"
-          onClick={() => setMenuOpen(false)}
+          onClick={() => closeNavigation()}
+          tabIndex={-1}
           type="button"
         />
       ) : null}
@@ -131,9 +227,11 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
         <header className="topbar">
           <button
             aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
             aria-label="Open navigation"
             className="icon-button mobile-menu"
             onClick={() => setMenuOpen(true)}
+            ref={menuButtonRef}
             type="button"
           >
             <Menu size={20} />
@@ -153,7 +251,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
           </div>
         </header>
 
-        <main className="main-content" id="main-content">{children}</main>
+        <main className="main-content" id="main-content" ref={mainRef} tabIndex={-1}>{children}</main>
       </div>
     </div>
   );
