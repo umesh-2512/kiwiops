@@ -14,8 +14,8 @@ const manifest = JSON.parse(
 
 describe("dependency security baseline", () => {
   it("keeps Next.js and its ESLint configuration on the same patched release", () => {
-    expect(manifest.dependencies.next).toBe("16.4.1");
-    expect(manifest.devDependencies["eslint-config-next"]).toBe("16.4.1");
+    expect(manifest.dependencies.next).toBe("16.4.6");
+    expect(manifest.devDependencies["eslint-config-next"]).toBe("16.4.6");
   });
 
   it("uses the reviewed patched test runner and source-map implementation", () => {
