@@ -15,9 +15,9 @@ import {
 import {
   type AuthActionState,
   hasFieldErrors,
-  validateBusinessName,
   validateLogin,
   validateSignup,
+  validateWorkspaceSetup,
 } from "@/lib/auth/validation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -138,7 +138,7 @@ export async function createWorkspaceAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const { data, fieldErrors } = validateBusinessName(formData);
+  const { data, fieldErrors } = validateWorkspaceSetup(formData);
   if (hasFieldErrors(fieldErrors)) return { fieldErrors, status: "error" };
 
   const supabase = await createClient();
@@ -163,6 +163,8 @@ export async function createWorkspaceAction(
     const memberDisplayName = `${profile.first_name} ${profile.last_name}`.trim();
     const result = await supabase.rpc("create_organization", {
       p_display_name: data.businessName,
+      p_gst_number: data.gstNumber,
+      p_gst_registered: data.gstRegistered,
       p_legal_name: data.businessName,
       p_member_display_name: memberDisplayName,
       p_slug: null,

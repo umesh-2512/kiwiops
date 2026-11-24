@@ -1,0 +1,22 @@
+export type BusinessSettings = {
+  organization_id: string;
+  legal_name: string | null;
+  trading_name: string;
+  business_email: string | null;
+  business_phone: string | null;
+  address_line_1: string | null;
+  address_line_2: string | null;
+  suburb: string | null;
+  city: string | null;
+  postcode: string | null;
+  nzbn: string | null;
+  gst_registered: boolean;
+  gst_number: string | null;
+  default_gst_rate: number | string;
+  currency: string;
+  timezone: string;
+  invoice_payment_terms_days: number;
+  gst_settings_confirmed_at: string | null;
+  financial_ready: boolean;
+  updated_at: string;
+};
