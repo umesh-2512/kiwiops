@@ -4,6 +4,7 @@ import {
   validateBusinessName,
   validateLogin,
   validateSignup,
+  validateWorkspaceSetup,
 } from "./validation";
 
 describe("authentication validation", () => {
@@ -47,5 +48,26 @@ describe("authentication validation", () => {
     const result = validateBusinessName(form);
     expect(result.data.businessName).toBe("Southern Pools & Spa Ltd");
     expect(hasFieldErrors(result.fieldErrors)).toBe(false);
+  });
+
+  it("requires explicit GST confirmation during workspace setup", () => {
+    const form = new FormData();
+    form.set("businessName", "Southern Pools");
+    expect(validateWorkspaceSetup(form).fieldErrors.gstStatus).toBeDefined();
+  });
+
+  it("accepts registered and non-registered workspace setup", () => {
+    const registered = new FormData();
+    registered.set("businessName", "Southern Pools");
+    registered.set("gstStatus", "registered");
+    registered.set("gstNumber", "49-091-850");
+    expect(hasFieldErrors(validateWorkspaceSetup(registered).fieldErrors)).toBe(false);
+    expect(validateWorkspaceSetup(registered).data.gstNumber).toBe("049091850");
+
+    const nonRegistered = new FormData();
+    nonRegistered.set("businessName", "Southern Pools");
+    nonRegistered.set("gstStatus", "not_registered");
+    expect(hasFieldErrors(validateWorkspaceSetup(nonRegistered).fieldErrors)).toBe(false);
+    expect(validateWorkspaceSetup(nonRegistered).data.gstRegistered).toBe(false);
   });
 });

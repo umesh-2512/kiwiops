@@ -13,9 +13,9 @@ insert into auth.users (
   ('00000000-0000-0000-0000-000000000000', '52222222-2222-2222-2222-222222222222', 'authenticated', 'authenticated', 'quote-tech-a@example.test', '', now(), '{}', '{}', now(), now()),
   ('00000000-0000-0000-0000-000000000000', '53333333-3333-3333-3333-333333333333', 'authenticated', 'authenticated', 'quote-owner-b@example.test', '', now(), '{}', '{}', now(), now());
 
-insert into public.organizations (id, display_name, created_by_user_id) values
-  ('5aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Quote Organization A', '51111111-1111-1111-1111-111111111111'),
-  ('5bbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Quote Organization B', '53333333-3333-3333-3333-333333333333');
+insert into public.organizations (id, display_name, legal_name, created_by_user_id) values
+  ('5aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Quote Organization A', 'Quote Organization A Limited', '51111111-1111-1111-1111-111111111111'),
+  ('5bbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Quote Organization B', 'Quote Organization B Limited', '53333333-3333-3333-3333-333333333333');
 
 insert into public.organization_members (
   id, organization_id, user_id, role, status, display_name, joined_at
@@ -26,10 +26,11 @@ insert into public.organization_members (
 
 insert into public.business_settings (
   organization_id, business_display_name, email, phone, address_line_1,
-  suburb, city, postcode, gst_registered, gst_number, default_gst_rate
+  suburb, city, postcode, gst_registered, gst_number, default_gst_rate,
+  gst_settings_confirmed_at, gst_settings_confirmed_by_member_id
 ) values
-  ('5aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Snapshot Business A', 'business-a@example.test', '09 500 0001', '10 Business Street', 'Takapuna', 'Auckland', '0622', true, '111-222-333', 15),
-  ('5bbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Snapshot Business B', 'business-b@example.test', '09 500 0002', '20 Other Street', 'Albany', 'Auckland', '0632', true, '444-555-666', 15);
+  ('5aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Snapshot Business A', 'business-a@example.test', '09 500 0001', '10 Business Street', 'Takapuna', 'Auckland', '0622', true, '049091850', 15, now(), '5a111111-1111-1111-1111-111111111111'),
+  ('5bbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Snapshot Business B', 'business-b@example.test', '09 500 0002', '20 Other Street', 'Albany', 'Auckland', '0632', true, '049091850', 15, now(), '5b333333-3333-3333-3333-333333333333');
 
 insert into public.customers (
   id, organization_id, first_name, last_name, email, phone, address_line_1,
@@ -55,7 +56,7 @@ select set_config('request.jwt.claims', json_build_object('sub', '51111111-1111-
 select lives_ok($$ select public.issue_quote('5e111111-1111-1111-1111-111111111111') $$, 'Owner can issue the organization quote');
 select is((select customer_name_snapshot from public.quotes where id = '5e111111-1111-1111-1111-111111111111'), 'Snapshot Customer A', 'Issuance captures the customer name');
 select is((select business_name_snapshot from public.quotes where id = '5e111111-1111-1111-1111-111111111111'), 'Snapshot Business A', 'Issuance captures the business name');
-select is((select business_gst_number_snapshot from public.quotes where id = '5e111111-1111-1111-1111-111111111111'), '111-222-333', 'Issuance captures GST registration details');
+select is((select business_gst_number_snapshot from public.quotes where id = '5e111111-1111-1111-1111-111111111111'), '049091850', 'Issuance captures GST registration details');
 select is((select total_cents from public.quotes where id = '5e111111-1111-1111-1111-111111111111'), 11500::bigint, 'Issuance leaves trusted financial totals unchanged');
 
 reset role;

@@ -1,3 +1,5 @@
+import { isValidNzIrdNumber, normalizeNzIrdNumber } from "../settings/validation";
+
 export type FieldErrors = Record<string, string[]>;
 
 export type AuthActionState = {
@@ -62,6 +64,27 @@ export function validateBusinessName(formData: FormData) {
   if (businessName.length > 160) addError(fieldErrors, "businessName", "Keep the business name under 160 characters.");
 
   return { data: { businessName }, fieldErrors };
+}
+
+export function validateWorkspaceSetup(formData: FormData) {
+  const base = validateBusinessName(formData);
+  const gstStatus = textValue(formData, "gstStatus");
+  const gstNumber = textValue(formData, "gstNumber");
+  const fieldErrors = { ...base.fieldErrors };
+  if (!['registered', 'not_registered'].includes(gstStatus)) {
+    addError(fieldErrors, "gstStatus", "Confirm whether your business is GST registered.");
+  }
+  if (gstStatus === "registered") {
+    if (!isValidNzIrdNumber(gstNumber)) addError(fieldErrors, "gstNumber", "Enter a valid New Zealand GST number.");
+  }
+  return {
+    data: {
+      ...base.data,
+      gstRegistered: gstStatus === "registered",
+      gstNumber: gstStatus === "registered" ? normalizeNzIrdNumber(gstNumber) : null,
+    },
+    fieldErrors,
+  };
 }
 
 export function hasFieldErrors(errors: FieldErrors) {
